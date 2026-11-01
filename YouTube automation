@@ -1,0 +1,90 @@
+import os
+import json
+import urllib.request
+import urllib.error
+
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+def ask_gemini(prompt):
+    if not API_KEY:
+        raise ValueError("GEMINI_API_KEY is missing")
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/"
+        "models/gemini-2.5-flash:generateContent?key=" + API_KEY
+    )
+
+    data = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }]
+    }
+
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(data).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST"
+    )
+
+    with urllib.request.urlopen(request, timeout=120) as response:
+        result = json.loads(response.read().decode("utf-8"))
+
+    return result["candidates"][0]["content"]["parts"][0]["text"]
+
+
+def create_youtube_script(topic):
+
+    prompt = f"""
+You are the professional content manager of Money Uncovered,
+an Indian finance education YouTube channel.
+
+Create an engaging YouTube Shorts script about:
+
+TOPIC: {topic}
+
+Requirements:
+1. Target Indian viewers.
+2. Use simple conversational English.
+3. Start with a powerful hook.
+4. Keep narration between 70 and 120 words.
+5. Explain concepts accurately.
+6. Never invent statistics or financial facts.
+7. Identify claims that require verification.
+8. Use a natural human storytelling style.
+9. Avoid robotic AI language.
+
+Return:
+
+TITLE:
+HOOK:
+SCRIPT:
+VISUAL DIRECTIONS:
+FACTS TO VERIFY:
+DESCRIPTION:
+HASHTAGS:
+"""
+
+    return ask_gemini(prompt)
+
+
+def main():
+    print("MONEY UNCOVERED AI AGENT")
+    print("-----------------------")
+
+    topic = input("Enter your video topic: ")
+
+    print("\nGenerating your YouTube Short...\n")
+
+    result = create_youtube_script(topic)
+
+    print(result)
+
+    with open("youtube_script.txt", "w", encoding="utf-8") as file:
+        file.write(result)
+
+    print("\nScript saved successfully!")
+
+
+if __name__ == "__main__":
+    main()
